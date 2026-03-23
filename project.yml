@@ -1,0 +1,29 @@
+name: DylanRecord
+options:
+  bundleIdPrefix: com.rasmus
+  deploymentTarget:
+    macOS: "14.2"
+  xcodeVersion: "16.0"
+  minimumXcodeGenVersion: "2.40"
+
+targets:
+  DylanRecord:
+    type: application
+    platform: macOS
+    sources:
+      - DylanRecord
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.rasmus.dylanrecord
+        MARKETING_VERSION: "0.1.0"
+        CURRENT_PROJECT_VERSION: 1
+        SWIFT_VERSION: "6.0"
+        MACOSX_DEPLOYMENT_TARGET: "14.2"
+        INFOPLIST_FILE: DylanRecord/Info.plist
+        CODE_SIGN_ENTITLEMENTS: DylanRecord/DylanRecord.entitlements
+        ENABLE_HARDENED_RUNTIME: YES
+        SWIFT_STRICT_CONCURRENCY: minimal
+    entitlements:
+      path: DylanRecord/DylanRecord.entitlements
+      properties:
+        com.apple.security.device.audio-input: true

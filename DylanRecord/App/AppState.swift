@@ -50,6 +50,51 @@ final class AppState {
         set { UserDefaults.standard.set(newValue, forKey: "obsidianVaultPath") }
     }
 
+    var language: String {
+        get { UserDefaults.standard.string(forKey: "language") ?? "multi" }
+        set { UserDefaults.standard.set(newValue, forKey: "language") }
+    }
+
+    var keywordsText: String {
+        get { UserDefaults.standard.string(forKey: "keywords") ?? Self.defaultKeywords }
+        set { UserDefaults.standard.set(newValue, forKey: "keywords") }
+    }
+
+    private static let defaultKeywords = """
+    Sasha
+    Archon
+    Claude Code
+    Claude
+    Anthropic
+    Cursor
+    Obsidian
+    Deepgram
+    Rasmus
+    Peter
+    Tove
+    push
+    BTW
+    PR
+    deploy
+    staging
+    production
+    API
+    webhook
+    """
+
+    static let supportedLanguages: [(code: String, name: String)] = [
+        ("multi", "Auto-detect (multilingual)"),
+        ("sv", "Svenska"),
+        ("en", "English"),
+        ("da", "Dansk"),
+        ("no", "Norsk"),
+        ("de", "Deutsch"),
+        ("fr", "Français"),
+        ("es", "Español"),
+        ("nl", "Nederlands"),
+        ("ja", "日本語"),
+    ]
+
     // Recording pipeline
     private var micCapture: MicCapture?
     private var systemCapture: SystemAudioCapture?
@@ -61,11 +106,17 @@ final class AppState {
 
     func setupHotkey() {
         hotkeyMonitor = NSEvent.addGlobalMonitorForEvents(matching: .keyDown) { [weak self] event in
-            // ⌘+Shift+R
-            if event.modifierFlags.contains([.command, .shift]) && event.keyCode == 15 {
-                DispatchQueue.main.async {
-                    self?.toggleRecording()
-                }
+            guard event.modifierFlags.contains([.command, .shift]) else { return }
+
+            switch event.keyCode {
+            case 15: // ⌘⇧R — toggle recording
+                Task { @MainActor in self?.toggleRecording() }
+            case 18: // ⌘⇧1 — Svenska
+                Task { @MainActor in self?.language = "sv" }
+            case 19: // ⌘⇧2 — English
+                Task { @MainActor in self?.language = "en" }
+            default:
+                break
             }
         }
     }
@@ -103,7 +154,9 @@ final class AppState {
         self.combiner = combiner
 
         // Set up Deepgram client (2-channel multichannel)
-        let client = DeepgramClient(apiKey: deepgramApiKey, channelCount: 2)
+        let lang = language == "multi" ? nil : language
+        let keyterms = loadKeywords()
+        let client = DeepgramClient(apiKey: deepgramApiKey, channelCount: 2, language: lang, keyterms: keyterms)
         client.onTranscript = { response in
             Task { @MainActor [weak self] in
                 self?.transcriptManager.handleResponse(response)
@@ -154,7 +207,7 @@ final class AppState {
             lastError = "System audio: \(error.localizedDescription)"
         }
 
-        print("[AppState] Recording started")
+        print("[AppState] Recording started — language: \(language), keyterms: \(keyterms.count)")
     }
 
     func stopRecording() {
@@ -196,6 +249,13 @@ final class AppState {
         let minutes = Int(elapsedTime) / 60
         let seconds = Int(elapsedTime) % 60
         return String(format: "%d:%02d", minutes, seconds)
+    }
+
+    func loadKeywords() -> [String] {
+        keywordsText
+            .components(separatedBy: .newlines)
+            .map { $0.trimmingCharacters(in: .whitespaces) }
+            .filter { !$0.isEmpty }
     }
 
     nonisolated deinit {

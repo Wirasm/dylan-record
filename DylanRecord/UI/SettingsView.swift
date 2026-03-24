@@ -31,13 +31,28 @@ struct SettingsView: View {
                 }
             }
 
-            Section("Hotkey") {
-                Text("⌘⇧R to start/stop recording")
+            Section("Keywords") {
+                Text("One per line. Boosts recognition of these terms.")
+                    .font(.caption)
                     .foregroundStyle(.secondary)
+                TextEditor(text: $state.keywordsText)
+                    .font(.body.monospaced())
+                    .frame(height: 150)
+                    .border(Color.secondary.opacity(0.3))
+            }
+
+            Section("Hotkeys") {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("⌘⇧R — Start / stop recording")
+                    Text("⌘⇧1 — Set language to Svenska")
+                    Text("⌘⇧2 — Set language to English")
+                }
+                .font(.caption)
+                .foregroundStyle(.secondary)
             }
         }
         .formStyle(.grouped)
-        .frame(width: 400, height: 280)
+        .frame(width: 400, height: 500)
         .navigationTitle("Dylan Record Settings")
     }
 

@@ -11,13 +11,18 @@ final class DeepgramClient: NSObject, URLSessionWebSocketDelegate {
     var onError: ((Error) -> Void)?
     var onConnected: (() -> Void)?
 
-    init(apiKey: String, channelCount: Int = 1) {
+    private let language: String?
+    private let keyterms: [String]
+
+    init(apiKey: String, channelCount: Int = 1, language: String? = nil, keyterms: [String] = []) {
         self.apiKey = apiKey
         self.channelCount = channelCount
+        self.language = language
+        self.keyterms = keyterms
         super.init()
     }
 
-    func connect() {
+    static func buildURL(channelCount: Int, language: String?, keyterms: [String]) -> URL? {
         var params = [
             "model=nova-3",
             "encoding=linear16",
@@ -32,8 +37,27 @@ final class DeepgramClient: NSObject, URLSessionWebSocketDelegate {
             params.append("multichannel=true")
         }
 
+        if let language {
+            params.append("language=\(language)")
+        } else {
+            params.append("language=multi")
+        }
+
+        for term in keyterms {
+            let encoded = term.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? term
+            params.append("keyterm=\(encoded)")
+        }
+
         let urlString = "wss://api.deepgram.com/v1/listen?" + params.joined(separator: "&")
-        guard let url = URL(string: urlString) else { return }
+        return URL(string: urlString)
+    }
+
+    func connect() {
+        guard let url = Self.buildURL(channelCount: channelCount, language: language, keyterms: keyterms) else {
+            print("[Deepgram] Invalid URL")
+            return
+        }
+        print("[Deepgram] Connecting: \(url.absoluteString)")
 
         var request = URLRequest(url: url)
         request.setValue("Token \(apiKey)", forHTTPHeaderField: "Authorization")
@@ -94,6 +118,9 @@ final class DeepgramClient: NSObject, URLSessionWebSocketDelegate {
     private func handleMessage(_ text: String) {
         guard let data = text.data(using: .utf8) else { return }
 
+        // Log all messages for debugging
+        print("[Deepgram] Received: \(String(text.prefix(200)))")
+
         do {
             let response = try JSONDecoder().decode(DeepgramResponse.self, from: data)
             guard let alt = response.channel.alternatives.first,
@@ -102,8 +129,11 @@ final class DeepgramClient: NSObject, URLSessionWebSocketDelegate {
             }
             onTranscript?(response)
         } catch {
-            // Not all messages are transcript results (e.g., metadata, errors)
-            // Silently ignore parse failures for non-Results messages
+            // Check if it's an error message from Deepgram
+            if text.contains("error") || text.contains("Error") {
+                print("[Deepgram] ERROR response: \(text)")
+                onError?(DeepgramClientError.serverError(text))
+            }
         }
     }
 
@@ -114,6 +144,15 @@ final class DeepgramClient: NSObject, URLSessionWebSocketDelegate {
             self?.webSocket?.send(.string("{\"type\": \"KeepAlive\"}")) { _ in }
         }
         keepaliveTimer?.resume()
+    }
+
+    enum DeepgramClientError: Error, LocalizedError {
+        case serverError(String)
+        var errorDescription: String? {
+            switch self {
+            case .serverError(let msg): return msg
+            }
+        }
     }
 
     // MARK: - URLSessionWebSocketDelegate

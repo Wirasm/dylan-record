@@ -28,7 +28,9 @@ struct MenuBarView: View {
     }
 
     private var idleView: some View {
-        VStack(spacing: 8) {
+        @Bindable var state = appState
+
+        return VStack(spacing: 8) {
             Text("Dylan Record")
                 .font(.headline)
 
@@ -49,6 +51,21 @@ struct MenuBarView: View {
                     .foregroundStyle(.orange)
                     .font(.caption)
             }
+
+            Divider()
+
+            // Language picker — prominent in main UI
+            Picker("Language", selection: $state.language) {
+                ForEach(AppState.supportedLanguages, id: \.code) { lang in
+                    Text(lang.name).tag(lang.code)
+                }
+            }
+            .pickerStyle(.menu)
+
+            // Language hotkey hints
+            Text("⌘⇧1 Svenska  ·  ⌘⇧2 English")
+                .font(.caption2)
+                .foregroundStyle(.tertiary)
 
             Divider()
 
@@ -85,6 +102,11 @@ struct MenuBarView: View {
                     .monospacedDigit()
                     .foregroundStyle(.secondary)
             }
+
+            let langName = AppState.supportedLanguages.first { $0.code == appState.language }?.name ?? appState.language
+            Text(langName)
+                .font(.caption)
+                .foregroundStyle(.secondary)
 
             if let error = appState.lastError {
                 Label(error, systemImage: "exclamationmark.triangle")

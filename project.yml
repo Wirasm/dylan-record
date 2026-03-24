@@ -11,7 +11,12 @@ targets:
     type: application
     platform: macOS
     sources:
-      - DylanRecord
+      - path: DylanRecord
+        excludes:
+          - "keywords.txt"
+      - path: DylanRecord/keywords.txt
+        type: file
+        buildPhase: resources
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.rasmus.dylanrecord
@@ -27,3 +32,15 @@ targets:
       path: DylanRecord/DylanRecord.entitlements
       properties:
         com.apple.security.device.audio-input: true
+
+  DylanRecordTests:
+    type: bundle.unit-test
+    platform: macOS
+    sources:
+      - DylanRecordTests
+    dependencies:
+      - target: DylanRecord
+    settings:
+      base:
+        SWIFT_VERSION: "6.0"
+        GENERATE_INFOPLIST_FILE: YES

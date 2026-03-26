@@ -3,6 +3,7 @@ import SwiftUI
 @main
 struct DylanRecordApp: App {
     @State private var appState = AppState()
+    @State private var meetingWatcher = MeetingWatcher()
 
     var body: some Scene {
         MenuBarExtra {
@@ -27,12 +28,14 @@ struct DylanRecordApp: App {
     }
 
     init() {
-        DispatchQueue.main.async { [appState] in
+        DispatchQueue.main.async { [appState, meetingWatcher] in
             appState.setupHotkey()
-            // Request calendar access and log events for testing
             Task {
                 let service = CalendarService()
-                _ = await service.requestAccess()
+                let granted = await service.requestAccess()
+                if granted {
+                    meetingWatcher.start()
+                }
             }
         }
     }

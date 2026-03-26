@@ -52,9 +52,15 @@ struct MenuBarView: View {
                     .font(.caption)
             }
 
+            // Next meeting
+            if let meeting = appState.nextMeeting {
+                Divider()
+                nextMeetingView(meeting)
+            }
+
             Divider()
 
-            // Language picker — prominent in main UI
+            // Language picker
             Picker("Language", selection: $state.language) {
                 ForEach(AppState.supportedLanguages, id: \.code) { lang in
                     Text(lang.name).tag(lang.code)
@@ -123,6 +129,49 @@ struct MenuBarView: View {
                 suggestedName = calendar.currentMeetingTitle()
                 appState.stopRecording()
             }
+        }
+    }
+
+    private func nextMeetingView(_ meeting: CalendarService.UpcomingMeeting) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text("Next meeting")
+                .font(.caption2)
+                .foregroundStyle(.tertiary)
+            HStack {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(meeting.title)
+                        .font(.caption)
+                        .fontWeight(.medium)
+                        .lineLimit(1)
+                    Text(timeUntilString(meeting.startDate))
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                }
+                Spacer()
+            }
+        }
+        .padding(8)
+        .background(.quaternary.opacity(0.5))
+        .cornerRadius(6)
+    }
+
+    private func timeUntilString(_ date: Date) -> String {
+        let now = Date()
+        let interval = date.timeIntervalSince(now)
+
+        if interval <= 0 {
+            return "Now"
+        } else if interval < 60 {
+            return "In less than a minute"
+        } else if interval < 3600 {
+            let mins = Int(interval / 60)
+            return "In \(mins) min"
+        } else {
+            let hours = Int(interval / 3600)
+            let mins = Int((interval.truncatingRemainder(dividingBy: 3600)) / 60)
+            let df = DateFormatter()
+            df.dateFormat = "HH:mm"
+            return "At \(df.string(from: date)) (\(hours)h \(mins)m)"
         }
     }
 

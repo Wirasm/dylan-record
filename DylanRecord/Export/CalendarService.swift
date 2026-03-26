@@ -52,6 +52,32 @@ struct CalendarService {
         return event?.endDate
     }
 
+    struct UpcomingMeeting {
+        let title: String
+        let startDate: Date
+        let endDate: Date
+    }
+
+    func nextMeeting(after date: Date = Date()) -> UpcomingMeeting? {
+        let calendar = Calendar.current
+        let windowEnd = calendar.date(byAdding: .hour, value: 12, to: date) ?? date
+
+        let predicate = store.predicateForEvents(
+            withStart: date,
+            end: windowEnd,
+            calendars: nil
+        )
+
+        let event = store.events(matching: predicate)
+            .filter { !$0.isAllDay }
+            .filter { $0.startDate > date }
+            .sorted { $0.startDate < $1.startDate }
+            .first
+
+        guard let event else { return nil }
+        return UpcomingMeeting(title: event.title ?? "Untitled", startDate: event.startDate, endDate: event.endDate)
+    }
+
     func meetingTitleOverlapping(start: Date, end: Date) -> String? {
         let predicate = store.predicateForEvents(
             withStart: start,

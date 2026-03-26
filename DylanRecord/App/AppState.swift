@@ -23,6 +23,8 @@ final class AppState {
     var state: RecordingState = .idle
     var elapsedTime: TimeInterval = 0
     var lastError: String?
+    var nextMeeting: CalendarService.UpcomingMeeting?
+    private var nextMeetingTimer: Timer?
 
     var isRecording: Bool {
         if case .recording = state { return true }
@@ -121,6 +123,21 @@ final class AppState {
                 break
             }
         }
+
+        startNextMeetingPolling()
+    }
+
+    func startNextMeetingPolling() {
+        refreshNextMeeting()
+        nextMeetingTimer = Timer.scheduledTimer(withTimeInterval: 60, repeats: true) { [weak self] _ in
+            Task { @MainActor in
+                self?.refreshNextMeeting()
+            }
+        }
+    }
+
+    private func refreshNextMeeting() {
+        nextMeeting = calendarService.nextMeeting()
     }
 
     func toggleRecording() {

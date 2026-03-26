@@ -101,8 +101,10 @@ final class AppState {
     private var combiner: AudioCombiner?
     private var deepgramClient: DeepgramClient?
     private(set) var transcriptManager = TranscriptManager()
+    private var silenceDetector: SilenceDetector?
     private var elapsedTimer: Timer?
     private var hotkeyMonitor: Any?
+    private let calendarService = CalendarService()
 
     func setupHotkey() {
         hotkeyMonitor = NSEvent.addGlobalMonitorForEvents(matching: .keyDown) { [weak self] event in
@@ -160,6 +162,12 @@ final class AppState {
         client.onTranscript = { response in
             Task { @MainActor [weak self] in
                 self?.transcriptManager.handleResponse(response)
+                // Notify silence detector that speech was detected
+                if response.isFinal,
+                   let transcript = response.channel.alternatives.first?.transcript,
+                   !transcript.trimmingCharacters(in: .whitespaces).isEmpty {
+                    self?.silenceDetector?.speechDetected()
+                }
             }
         }
         client.onError = { error in
@@ -207,10 +215,27 @@ final class AppState {
             lastError = "System audio: \(error.localizedDescription)"
         }
 
-        print("[AppState] Recording started — language: \(language), keyterms: \(keyterms.count)")
+        // Start silence detector with calendar awareness
+        let detector = SilenceDetector()
+        let calendarEnd = calendarService.currentMeetingEndDate(at: now)
+        detector.onShouldAutoStop = { [weak self] in
+            self?.autoStopRecording()
+        }
+        detector.start(recordingStart: now, calendarEndDate: calendarEnd)
+        self.silenceDetector = detector
+
+        print("[AppState] Recording started — language: \(language), keyterms: \(keyterms.count), calendarEnd: \(calendarEnd?.description ?? "none")")
+    }
+
+    func autoStopRecording() {
+        print("[AppState] Auto-stopping recording due to silence/calendar/max duration")
+        stopRecording()
     }
 
     func stopRecording() {
+        silenceDetector?.stop()
+        silenceDetector = nil
+
         elapsedTimer?.invalidate()
         elapsedTimer = nil
 

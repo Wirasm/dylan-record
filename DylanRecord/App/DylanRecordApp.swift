@@ -27,9 +27,13 @@ struct DylanRecordApp: App {
     }
 
     init() {
-        // Delay hotkey setup to after app is fully initialized
         DispatchQueue.main.async { [appState] in
             appState.setupHotkey()
+            // Request calendar access and log events for testing
+            Task {
+                let service = CalendarService()
+                _ = await service.requestAccess()
+            }
         }
     }
 }

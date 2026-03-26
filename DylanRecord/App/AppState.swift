@@ -218,7 +218,8 @@ final class AppState {
         // Start silence detector with calendar awareness
         let detector = SilenceDetector()
         let calendarEnd = calendarService.currentMeetingEndDate(at: now)
-        detector.onShouldAutoStop = { [weak self] in
+        detector.onShouldAutoStop = { [weak self] reason in
+            print("[AppState] \(reason)")
             self?.autoStopRecording()
         }
         detector.start(recordingStart: now, calendarEndDate: calendarEnd)

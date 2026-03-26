@@ -5,16 +5,16 @@ import UserNotifications
 final class SilenceDetector {
     private var lastSpeechDate: Date = Date()
     private var checkTimer: Timer?
-    private var hasNotified = false
+    private var hasNudged = false
     private var calendarEndDate: Date?
 
     // Config
-    let nudgeAfter: TimeInterval = 5 * 60       // 5 min silence → notification
+    let nudgeAfter: TimeInterval = 3 * 60       // 3 min silence → notification
     let autoStopAfter: TimeInterval = 10 * 60   // 10 min silence → auto-stop
     let maxDuration: TimeInterval = 3 * 60 * 60 // 3 hour hard cap
     let calendarGrace: TimeInterval = 5 * 60    // 5 min after calendar end + silence → auto-stop
 
-    var onShouldAutoStop: (() -> Void)?
+    var onShouldAutoStop: ((String) -> Void)?
 
     private var recordingStartDate: Date?
 
@@ -22,7 +22,7 @@ final class SilenceDetector {
         self.recordingStartDate = recordingStart
         self.calendarEndDate = calendarEndDate
         self.lastSpeechDate = recordingStart
-        self.hasNotified = false
+        self.hasNudged = false
 
         requestNotificationPermission()
 
@@ -38,10 +38,9 @@ final class SilenceDetector {
         checkTimer = nil
     }
 
-    /// Call this whenever speech is detected (a non-empty transcript arrives)
     func speechDetected() {
         lastSpeechDate = Date()
-        hasNotified = false
+        hasNudged = false
     }
 
     private func check() {
@@ -51,8 +50,9 @@ final class SilenceDetector {
 
         // Hard cap on duration
         if totalDuration >= maxDuration {
-            print("[SilenceDetector] Max duration reached (\(Int(maxDuration / 60)) min), auto-stopping")
-            onShouldAutoStop?()
+            let reason = "Recording auto-stopped: reached \(Int(maxDuration / 3600)) hour limit."
+            sendNotification(title: "Recording Stopped", body: reason)
+            onShouldAutoStop?(reason)
             return
         }
 
@@ -60,33 +60,40 @@ final class SilenceDetector {
         if let calEnd = calendarEndDate,
            now > calEnd.addingTimeInterval(calendarGrace),
            silenceDuration > 60 {
-            print("[SilenceDetector] Past calendar end + grace + silent, auto-stopping")
-            onShouldAutoStop?()
+            let reason = "Recording auto-stopped: calendar event ended and no speech detected."
+            sendNotification(title: "Recording Stopped", body: reason)
+            onShouldAutoStop?(reason)
             return
         }
 
-        // Auto-stop after extended silence
+        // Auto-stop after 10 min silence
         if silenceDuration >= autoStopAfter {
-            print("[SilenceDetector] \(Int(autoStopAfter / 60)) min silence, auto-stopping")
-            onShouldAutoStop?()
+            let mins = Int(autoStopAfter / 60)
+            let reason = "Recording auto-stopped: \(mins) minutes of silence."
+            sendNotification(title: "Recording Stopped", body: reason)
+            onShouldAutoStop?(reason)
             return
         }
 
-        // Nudge notification after shorter silence
-        if silenceDuration >= nudgeAfter && !hasNotified {
-            hasNotified = true
-            sendNudgeNotification()
+        // Nudge notification after 3 min silence
+        if silenceDuration >= nudgeAfter && !hasNudged {
+            hasNudged = true
+            let mins = Int(silenceDuration / 60)
+            sendNotification(
+                title: "Still Recording",
+                body: "No speech detected for \(mins) minutes. Forgot to stop?"
+            )
         }
     }
 
-    private func sendNudgeNotification() {
+    private func sendNotification(title: String, body: String) {
         let content = UNMutableNotificationContent()
-        content.title = "Dylan Record"
-        content.body = "Still recording — no speech detected for 5 minutes. Forgot to stop?"
+        content.title = title
+        content.body = body
         content.sound = .default
 
         let request = UNNotificationRequest(
-            identifier: "silence-nudge",
+            identifier: "dylanrecord-\(UUID().uuidString)",
             content: content,
             trigger: nil
         )

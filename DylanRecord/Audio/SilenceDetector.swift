@@ -1,5 +1,5 @@
+import AppKit
 import Foundation
-import UserNotifications
 
 @MainActor
 final class SilenceDetector {
@@ -23,8 +23,6 @@ final class SilenceDetector {
         self.calendarEndDate = calendarEndDate
         self.lastSpeechDate = recordingStart
         self.hasNudged = false
-
-        requestNotificationPermission()
 
         checkTimer = Timer.scheduledTimer(withTimeInterval: 30, repeats: true) { [weak self] _ in
             Task { @MainActor in
@@ -87,29 +85,11 @@ final class SilenceDetector {
     }
 
     private func sendNotification(title: String, body: String) {
-        let content = UNMutableNotificationContent()
-        content.title = title
-        content.body = body
-        content.sound = .default
-
-        let request = UNNotificationRequest(
-            identifier: "dylanrecord-\(UUID().uuidString)",
-            content: content,
-            trigger: nil
-        )
-
-        UNUserNotificationCenter.current().add(request) { error in
-            if let error {
-                print("[SilenceDetector] Notification error: \(error)")
-            }
-        }
-    }
-
-    private func requestNotificationPermission() {
-        UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound]) { _, error in
-            if let error {
-                print("[SilenceDetector] Notification permission error: \(error)")
-            }
-        }
+        // Use osascript for reliable notifications without UNUserNotificationCenter crashes
+        let script = "display notification \"\(body)\" with title \"\(title)\" sound name \"default\""
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: "/usr/bin/osascript")
+        process.arguments = ["-e", script]
+        try? process.run()
     }
 }

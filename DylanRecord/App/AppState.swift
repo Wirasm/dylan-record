@@ -128,10 +128,16 @@ final class AppState {
     }
 
     func startNextMeetingPolling() {
-        refreshNextMeeting()
-        nextMeetingTimer = Timer.scheduledTimer(withTimeInterval: 60, repeats: true) { [weak self] _ in
-            Task { @MainActor in
-                self?.refreshNextMeeting()
+        Task { @MainActor in
+            let granted = await CalendarService().requestAccess()
+            print("[AppState] Calendar access: \(granted)")
+            if granted {
+                refreshNextMeeting()
+                nextMeetingTimer = Timer.scheduledTimer(withTimeInterval: 60, repeats: true) { [weak self] _ in
+                    Task { @MainActor in
+                        self?.refreshNextMeeting()
+                    }
+                }
             }
         }
     }

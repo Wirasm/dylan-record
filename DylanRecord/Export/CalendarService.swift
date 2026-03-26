@@ -2,7 +2,8 @@ import EventKit
 import Foundation
 
 struct CalendarService {
-    private let store = EKEventStore()
+    nonisolated(unsafe) static let shared = EKEventStore()
+    private let store = CalendarService.shared
 
     func requestAccess() async -> Bool {
         do {
@@ -59,6 +60,7 @@ struct CalendarService {
     }
 
     func nextMeeting(after date: Date = Date()) -> UpcomingMeeting? {
+        let status = EKEventStore.authorizationStatus(for: .event)
         let calendar = Calendar.current
         let windowEnd = calendar.date(byAdding: .hour, value: 12, to: date) ?? date
 
@@ -68,13 +70,18 @@ struct CalendarService {
             calendars: nil
         )
 
-        let event = store.events(matching: predicate)
-            .filter { !$0.isAllDay }
-            .filter { $0.startDate > date }
+        let allEvents = store.events(matching: predicate)
+        let nonAllDay = allEvents.filter { !$0.isAllDay }
+        let future = nonAllDay.filter { $0.startDate > date }
+
+        print("[Calendar] nextMeeting — status: \(status.rawValue), all: \(allEvents.count), nonAllDay: \(nonAllDay.count), future: \(future.count)")
+
+        let event = future
             .sorted { $0.startDate < $1.startDate }
             .first
 
         guard let event else { return nil }
+        print("[Calendar] Next: \(event.title ?? "?") at \(event.startDate)")
         return UpcomingMeeting(title: event.title ?? "Untitled", startDate: event.startDate, endDate: event.endDate)
     }
 

@@ -81,7 +81,9 @@ struct CalendarService {
             .first
 
         guard let event else { return nil }
-        print("[Calendar] Next: \(event.title ?? "?") at \(event.startDate)")
+        let title = event.title ?? "?"
+        let when: Date = event.startDate
+        print("[Calendar] Next: \(title) at \(when)")
         return UpcomingMeeting(title: event.title ?? "Untitled", startDate: event.startDate, endDate: event.endDate)
     }
 

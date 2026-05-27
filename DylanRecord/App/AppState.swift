@@ -167,8 +167,10 @@ final class AppState {
 
         // Start elapsed timer
         elapsedTimer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] _ in
-            guard let self, let start = self.recordingStartDate else { return }
-            self.elapsedTime = Date().timeIntervalSince(start)
+            Task { @MainActor in
+                guard let self, let start = self.recordingStartDate else { return }
+                self.elapsedTime = Date().timeIntervalSince(start)
+            }
         }
 
         // Clear previous transcript

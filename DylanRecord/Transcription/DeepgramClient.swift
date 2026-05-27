@@ -1,15 +1,15 @@
 import Foundation
 
 final class DeepgramClient: NSObject, URLSessionWebSocketDelegate {
-    private var webSocket: URLSessionWebSocketTask?
-    private var session: URLSession?
-    private var keepaliveTimer: DispatchSourceTimer?
+    nonisolated(unsafe) private var webSocket: URLSessionWebSocketTask?
+    nonisolated(unsafe) private var session: URLSession?
+    nonisolated(unsafe) private var keepaliveTimer: DispatchSourceTimer?
     private let apiKey: String
     private let channelCount: Int
 
-    var onTranscript: ((DeepgramResponse) -> Void)?
-    var onError: ((Error) -> Void)?
-    var onConnected: (() -> Void)?
+    nonisolated(unsafe) var onTranscript: ((DeepgramResponse) -> Void)?
+    nonisolated(unsafe) var onError: ((Error) -> Void)?
+    nonisolated(unsafe) var onConnected: (() -> Void)?
 
     private let language: String?
     private let keyterms: [String]

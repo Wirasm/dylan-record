@@ -43,7 +43,7 @@ final class AudioConverter {
         var conversionError: NSError?
 
         let inputRef = inputBuffer
-        var consumed = false
+        nonisolated(unsafe) var consumed = false
         converter.convert(to: outputBuffer, error: &conversionError) { _, outStatus in
             if consumed {
                 outStatus.pointee = .noDataNow

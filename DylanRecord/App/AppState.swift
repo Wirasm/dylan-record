@@ -1,5 +1,6 @@
 import AVFoundation
 import Foundation
+import ServiceManagement
 import SwiftUI
 
 @MainActor
@@ -53,6 +54,27 @@ final class AppState {
     var deepgramApiKey: String {
         get { UserDefaults.standard.string(forKey: "deepgramApiKey") ?? "" }
         set { UserDefaults.standard.set(newValue, forKey: "deepgramApiKey") }
+    }
+
+    var anthropicApiKey: String {
+        get { UserDefaults.standard.string(forKey: "anthropicApiKey") ?? "" }
+        set { UserDefaults.standard.set(newValue, forKey: "anthropicApiKey") }
+    }
+
+    var launchAtLogin = SMAppService.mainApp.status == .enabled {
+        didSet {
+            guard launchAtLogin != oldValue else { return }
+            do {
+                if launchAtLogin {
+                    try SMAppService.mainApp.register()
+                } else {
+                    try SMAppService.mainApp.unregister()
+                }
+            } catch {
+                print("[AppState] Launch at login failed: \(error)")
+                lastError = "Launch at login: \(error.localizedDescription)"
+            }
+        }
     }
 
     var obsidianVaultPath: String {
@@ -112,6 +134,8 @@ final class AppState {
     private var deepgramClient: DeepgramClient?
     private(set) var transcriptManager = TranscriptManager()
     private var silenceDetector: SilenceDetector?
+    private var channelWatchdog: ChannelWatchdog?
+    private var backupWriter: AudioBackupWriter?
     private var elapsedTimer: Timer?
     private var hotkeyMonitor: Any?
     private var localHotkeyMonitor: Any?
@@ -226,9 +250,13 @@ final class AppState {
         let combiner = AudioCombiner()
         self.combiner = combiner
 
-        // Set up Deepgram client (2-channel multichannel)
+        // Set up Deepgram client (2-channel multichannel).
+        // Attendee names from the current calendar event boost name recognition.
         let lang = language == "multi" ? nil : language
-        let keyterms = loadKeywords()
+        var keyterms = loadKeywords()
+        for name in calendarService.currentMeetingAttendees(at: now) where !keyterms.contains(name) {
+            keyterms.append(name)
+        }
         let client = DeepgramClient(apiKey: deepgramApiKey, channelCount: 2, language: lang, keyterms: keyterms)
         client.onTranscript = { response in
             Task { @MainActor [weak self] in
@@ -237,6 +265,7 @@ final class AppState {
                     // Persist immediately so a crash never loses the meeting
                     self.draftStore.append(segment)
                     self.silenceDetector?.speechDetected()
+                    self.channelWatchdog?.segmentArrived(speaker: segment.speaker)
                 }
             }
         }
@@ -265,9 +294,21 @@ final class AppState {
         }
         self.deepgramClient = client
 
-        // Wire combiner output to Deepgram
-        combiner.onInterleavedData = { [weak client] data in
+        // Local WAV backup — re-transcribable if Deepgram fails entirely.
+        // Deleted on successful save.
+        let backup: AudioBackupWriter?
+        do {
+            backup = try AudioBackupWriter()
+        } catch {
+            print("[AppState] Audio backup unavailable: \(error)")
+            backup = nil
+        }
+        self.backupWriter = backup
+
+        // Wire combiner output to Deepgram and the backup file
+        combiner.onInterleavedData = { [weak client, weak backup] data in
             client?.sendAudio(data)
+            backup?.append(data)
         }
 
         // Start mic capture
@@ -314,6 +355,11 @@ final class AppState {
         detector.start(recordingStart: now, calendarEndDate: calendarEnd)
         self.silenceDetector = detector
 
+        // Watch for one-sided recordings (mic silently dead)
+        let watchdog = ChannelWatchdog()
+        watchdog.start(recordingStart: now)
+        self.channelWatchdog = watchdog
+
         print("[AppState] Recording started — language: \(language), keyterms: \(keyterms.count), calendarEnd: \(calendarEnd?.description ?? "none")")
     }
 
@@ -335,6 +381,9 @@ final class AppState {
         silenceDetector?.stop()
         silenceDetector = nil
 
+        channelWatchdog?.stop()
+        channelWatchdog = nil
+
         elapsedTimer?.invalidate()
         elapsedTimer = nil
 
@@ -350,12 +399,15 @@ final class AppState {
         // last second of the meeting gets clipped.
         let combiner = self.combiner
         let client = self.deepgramClient
+        let backup = self.backupWriter
         self.combiner = nil
         self.deepgramClient = nil
+        self.backupWriter = nil
         Task {
             try? await Task.sleep(for: .seconds(1))
             combiner?.stop()
             client?.disconnect()
+            backup?.finish()
         }
 
         let count = transcriptManager.segments.count
@@ -380,7 +432,15 @@ final class AppState {
             )
             print("[AppState] Saved to: \(filePath)")
             draftStore.clear()
+            AudioBackupWriter.clear()
+            let transcriptText = transcriptManager.formattedTranscript()
             finishSaving()
+            openInObsidian(filePath: filePath)
+            if !anthropicApiKey.isEmpty {
+                Task {
+                    await addSummary(toFileAt: filePath, transcript: transcriptText, meetingName: name)
+                }
+            }
         } catch {
             // Stay in .saving — the transcript and draft survive for retry.
             lastError = "Save failed: \(error.localizedDescription)"
@@ -400,7 +460,51 @@ final class AppState {
     func discardRecording() {
         transcriptManager.clear()
         draftStore.clear()
+        AudioBackupWriter.clear()
         finishSaving()
+    }
+
+    private func openInObsidian(filePath: String) {
+        let vaultName = (obsidianVaultPath as NSString).lastPathComponent
+        var relative = filePath
+        if relative.hasPrefix(obsidianVaultPath) {
+            relative = String(relative.dropFirst(obsidianVaultPath.count))
+        }
+        relative = relative.trimmingCharacters(in: CharacterSet(charactersIn: "/"))
+
+        var components = URLComponents()
+        components.scheme = "obsidian"
+        components.host = "open"
+        components.queryItems = [
+            URLQueryItem(name: "vault", value: vaultName),
+            URLQueryItem(name: "file", value: relative),
+        ]
+        if let url = components.url {
+            NSWorkspace.shared.open(url)
+        }
+    }
+
+    /// Generates an AI summary with action items and inserts it at the top of
+    /// the saved note (after the title). Obsidian reloads the file on change.
+    private func addSummary(toFileAt path: String, transcript: String, meetingName: String) async {
+        do {
+            let summary = try await MeetingSummarizer(apiKey: anthropicApiKey)
+                .summarize(transcript: transcript, meetingName: meetingName)
+
+            var contents = try String(contentsOfFile: path, encoding: .utf8)
+            if let titleStart = contents.range(of: "\n# "),
+               let titleEnd = contents.range(of: "\n", range: titleStart.upperBound..<contents.endIndex) {
+                contents.insert(contentsOf: "\n\(summary)\n", at: titleEnd.upperBound)
+            } else {
+                contents += "\n\n\(summary)\n"
+            }
+            try contents.write(toFile: path, atomically: true, encoding: .utf8)
+            print("[AppState] Summary added to \(path)")
+            Notifier.send(title: "Summary Added", body: "AI summary added to \(meetingName).")
+        } catch {
+            print("[AppState] Summarization failed: \(error)")
+            Notifier.send(title: "Summary Failed", body: error.localizedDescription)
+        }
     }
 
     func formatElapsedTime() -> String {

@@ -119,12 +119,51 @@ struct MenuBarView: View {
                     .font(.caption)
             }
 
+            liveTranscriptView
+
             Text("\(appState.transcriptManager.segments.count) segments")
                 .font(.caption)
                 .foregroundStyle(.secondary)
 
             Button("Stop Recording  ⌘⇧R") {
                 appState.stopRecording()
+            }
+        }
+    }
+
+    private var liveTranscriptView: some View {
+        ScrollViewReader { proxy in
+            ScrollView {
+                VStack(alignment: .leading, spacing: 6) {
+                    if appState.transcriptManager.segments.isEmpty {
+                        Text("Waiting for speech…")
+                            .font(.caption)
+                            .foregroundStyle(.tertiary)
+                    }
+                    ForEach(appState.transcriptManager.segments) { segment in
+                        (Text("\(segment.speaker.rawValue): ")
+                            .bold()
+                            .foregroundStyle(segment.speaker == .me ? Color.accentColor : Color.secondary)
+                            + Text(segment.text))
+                            .font(.caption)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .id(segment.id)
+                    }
+                }
+                .padding(6)
+            }
+            .frame(height: 200)
+            .background(.quaternary.opacity(0.3))
+            .cornerRadius(6)
+            .onChange(of: appState.transcriptManager.segments.count) {
+                if let last = appState.transcriptManager.segments.last {
+                    proxy.scrollTo(last.id, anchor: .bottom)
+                }
+            }
+            .onAppear {
+                if let last = appState.transcriptManager.segments.last {
+                    proxy.scrollTo(last.id, anchor: .bottom)
+                }
             }
         }
     }

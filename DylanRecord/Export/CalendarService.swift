@@ -18,6 +18,15 @@ struct CalendarService {
         currentMeetingEvent(at: date)?.endDate
     }
 
+    /// Attendee display names of the meeting happening right now — used to
+    /// boost Deepgram recognition of names. Skips raw email addresses.
+    func currentMeetingAttendees(at date: Date = Date()) -> [String] {
+        guard let attendees = currentMeetingEvent(at: date)?.attendees else { return [] }
+        return attendees
+            .compactMap { $0.name }
+            .filter { !$0.contains("@") }
+    }
+
     private func currentMeetingEvent(at date: Date) -> EKEvent? {
         let calendar = Calendar.current
         let windowStart = calendar.date(byAdding: .minute, value: -5, to: date) ?? date

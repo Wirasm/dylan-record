@@ -12,6 +12,18 @@ struct SettingsView: View {
                     .textFieldStyle(.roundedBorder)
             }
 
+            Section("AI Summary") {
+                SecureField("Anthropic API Key", text: $state.anthropicApiKey)
+                    .textFieldStyle(.roundedBorder)
+                Text("Adds a summary, decisions, and action items to saved transcripts. Leave empty to disable.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+
+            Section("General") {
+                Toggle("Launch at login", isOn: $state.launchAtLogin)
+            }
+
             Section("Obsidian") {
                 HStack {
                     TextField("Vault Path", text: $state.obsidianVaultPath)

@@ -23,6 +23,16 @@ struct SavePopover: View {
             Text("Save Transcript")
                 .font(.headline)
 
+            Text("\(appState.transcriptManager.segments.count) segments")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+
+            if let error = appState.lastError {
+                Label(error, systemImage: "exclamationmark.triangle")
+                    .foregroundStyle(.orange)
+                    .font(.caption)
+            }
+
             TextField("Meeting name", text: $meetingName)
                 .textFieldStyle(.roundedBorder)
                 .onSubmit {

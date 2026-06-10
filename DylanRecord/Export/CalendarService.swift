@@ -14,26 +14,11 @@ struct CalendarService {
         }
     }
 
-    func currentMeetingTitle(at date: Date = Date()) -> String? {
-        let calendar = Calendar.current
-        let windowStart = calendar.date(byAdding: .minute, value: -5, to: date) ?? date
-        let windowEnd = calendar.date(byAdding: .minute, value: 5, to: date) ?? date
-
-        let predicate = store.predicateForEvents(
-            withStart: windowStart,
-            end: windowEnd,
-            calendars: nil
-        )
-
-        let events = store.events(matching: predicate)
-            .filter { !$0.isAllDay }
-            .filter { $0.startDate <= date && $0.endDate >= date }
-            .sorted { $0.startDate < $1.startDate }
-
-        return events.first?.title
+    func currentMeetingEndDate(at date: Date = Date()) -> Date? {
+        currentMeetingEvent(at: date)?.endDate
     }
 
-    func currentMeetingEndDate(at date: Date = Date()) -> Date? {
+    private func currentMeetingEvent(at date: Date) -> EKEvent? {
         let calendar = Calendar.current
         let windowStart = calendar.date(byAdding: .minute, value: -5, to: date) ?? date
         let windowEnd = calendar.date(byAdding: .minute, value: 5, to: date) ?? date
@@ -44,13 +29,11 @@ struct CalendarService {
             calendars: nil
         )
 
-        let event = store.events(matching: predicate)
+        return store.events(matching: predicate)
             .filter { !$0.isAllDay }
             .filter { $0.startDate <= date && $0.endDate >= date }
             .sorted { $0.startDate < $1.startDate }
             .first
-
-        return event?.endDate
     }
 
     struct UpcomingMeeting {

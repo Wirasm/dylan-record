@@ -4,7 +4,9 @@ struct DeepgramResponse: Decodable {
     let type: String
     let channelIndex: [Int]
     let duration: Double
-    let start: Double
+    // Mutable: stream time restarts at 0 on reconnect, so the client shifts
+    // it by the connection's offset into the recording.
+    var start: Double
     let isFinal: Bool
     let speechFinal: Bool
     let channel: ChannelResult
@@ -42,14 +44,14 @@ struct DeepgramWord: Decodable {
     }
 }
 
-struct TranscriptSegment: Identifiable {
-    let id = UUID()
+struct TranscriptSegment: Identifiable, Codable {
+    var id = UUID()
     let speaker: Speaker
     let text: String
     let startTime: Double
     let endTime: Double
 
-    enum Speaker: String {
+    enum Speaker: String, Codable {
         case me = "Me"
         case them = "Them"
     }

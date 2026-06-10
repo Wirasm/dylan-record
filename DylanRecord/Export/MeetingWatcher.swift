@@ -44,20 +44,12 @@ final class MeetingWatcher {
             guard !notifiedEventIDs.contains(eventID) else { continue }
 
             notifiedEventIDs.insert(eventID)
-            sendNotification(title: "Meeting Starting", body: "\(event.title ?? "Meeting") — Start recording?")
+            Notifier.send(title: "Meeting Starting", body: "\(event.title ?? "Meeting") — Start recording?")
 
             let idToClean = eventID
             DispatchQueue.main.asyncAfter(deadline: .now() + 7200) { [weak self] in
                 self?.notifiedEventIDs.remove(idToClean)
             }
         }
-    }
-
-    private func sendNotification(title: String, body: String) {
-        let script = "display notification \"\(body)\" with title \"\(title)\" sound name \"default\""
-        let process = Process()
-        process.executableURL = URL(fileURLWithPath: "/usr/bin/osascript")
-        process.arguments = ["-e", script]
-        try? process.run()
     }
 }

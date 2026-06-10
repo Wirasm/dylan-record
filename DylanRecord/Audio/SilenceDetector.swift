@@ -49,7 +49,7 @@ final class SilenceDetector {
         // Hard cap on duration
         if totalDuration >= maxDuration {
             let reason = "Recording auto-stopped: reached \(Int(maxDuration / 3600)) hour limit."
-            sendNotification(title: "Recording Stopped", body: reason)
+            Notifier.send(title: "Recording Stopped", body: reason)
             onShouldAutoStop?(reason)
             return
         }
@@ -59,7 +59,7 @@ final class SilenceDetector {
            now > calEnd.addingTimeInterval(calendarGrace),
            silenceDuration > 60 {
             let reason = "Recording auto-stopped: calendar event ended and no speech detected."
-            sendNotification(title: "Recording Stopped", body: reason)
+            Notifier.send(title: "Recording Stopped", body: reason)
             onShouldAutoStop?(reason)
             return
         }
@@ -68,7 +68,7 @@ final class SilenceDetector {
         if silenceDuration >= autoStopAfter {
             let mins = Int(autoStopAfter / 60)
             let reason = "Recording auto-stopped: \(mins) minutes of silence."
-            sendNotification(title: "Recording Stopped", body: reason)
+            Notifier.send(title: "Recording Stopped", body: reason)
             onShouldAutoStop?(reason)
             return
         }
@@ -77,19 +77,10 @@ final class SilenceDetector {
         if silenceDuration >= nudgeAfter && !hasNudged {
             hasNudged = true
             let mins = Int(silenceDuration / 60)
-            sendNotification(
+            Notifier.send(
                 title: "Still Recording",
                 body: "No speech detected for \(mins) minutes. Forgot to stop?"
             )
         }
-    }
-
-    private func sendNotification(title: String, body: String) {
-        // Use osascript for reliable notifications without UNUserNotificationCenter crashes
-        let script = "display notification \"\(body)\" with title \"\(title)\" sound name \"default\""
-        let process = Process()
-        process.executableURL = URL(fileURLWithPath: "/usr/bin/osascript")
-        process.arguments = ["-e", script]
-        try? process.run()
     }
 }

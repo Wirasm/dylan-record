@@ -4,15 +4,18 @@ import Foundation
 final class TranscriptManager {
     var segments: [TranscriptSegment] = []
 
-    func handleResponse(_ response: DeepgramResponse) {
+    /// Appends a segment for a final, non-empty response. Returns it so the
+    /// caller can persist it to the crash-safe draft.
+    @discardableResult
+    func handleResponse(_ response: DeepgramResponse) -> TranscriptSegment? {
         let channelIndex = response.channelIndex.first ?? 0
         let speaker: TranscriptSegment.Speaker = channelIndex == 0 ? .them : .me
 
-        guard let alt = response.channel.alternatives.first else { return }
+        guard let alt = response.channel.alternatives.first else { return nil }
         let text = alt.transcript.trimmingCharacters(in: .whitespaces)
-        guard !text.isEmpty else { return }
+        guard !text.isEmpty else { return nil }
 
-        guard response.isFinal else { return }
+        guard response.isFinal else { return nil }
 
         let segment = TranscriptSegment(
             speaker: speaker,
@@ -22,6 +25,7 @@ final class TranscriptManager {
         )
 
         segments.append(segment)
+        return segment
     }
 
     func clear() {

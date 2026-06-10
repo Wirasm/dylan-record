@@ -2,15 +2,14 @@ import SwiftUI
 
 struct MenuBarView: View {
     @Environment(AppState.self) private var appState
-    @State private var suggestedName: String?
 
     var body: some View {
         VStack(spacing: 12) {
             if appState.isSaving {
                 SavePopover(
-                    suggestedName: suggestedName,
+                    suggestedName: appState.suggestedMeetingName,
                     onSave: { name in
-                        saveTranscript(name: name)
+                        appState.saveTranscript(name: name)
                     },
                     onDiscard: {
                         appState.discardRecording()
@@ -125,8 +124,6 @@ struct MenuBarView: View {
                 .foregroundStyle(.secondary)
 
             Button("Stop Recording  ⌘⇧R") {
-                let calendar = CalendarService()
-                suggestedName = calendar.currentMeetingTitle()
                 appState.stopRecording()
             }
         }
@@ -175,29 +172,4 @@ struct MenuBarView: View {
         }
     }
 
-    private func saveTranscript(name: String) {
-        let vaultPath = appState.obsidianVaultPath
-        guard !vaultPath.isEmpty else {
-            appState.lastError = "Set vault path in Settings."
-            appState.finishSaving()
-            return
-        }
-
-        let exporter = MarkdownExporter()
-        do {
-            let filePath = try exporter.export(
-                segments: appState.transcriptManager.segments,
-                meetingName: name,
-                startDate: appState.recordingStartDate ?? Date(),
-                duration: appState.elapsedTime,
-                vaultPath: vaultPath,
-                calendarEvent: nil
-            )
-            print("[MenuBarView] Saved to: \(filePath)")
-        } catch {
-            appState.lastError = "Save failed: \(error.localizedDescription)"
-        }
-
-        appState.finishSaving()
-    }
 }

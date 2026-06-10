@@ -30,12 +30,14 @@ struct DylanRecordApp: App {
     init() {
         DispatchQueue.main.async { [appState, meetingWatcher] in
             appState.setupHotkey()
-            // MeetingWatcher also needs calendar access — start after AppState requests it
             Task {
-                let granted = (try? await CalendarService.shared.requestFullAccessToEvents()) ?? false
+                let granted = await CalendarService().requestAccess()
                 if granted {
                     meetingWatcher.start()
                 }
+                appState.startNextMeetingPolling(accessGranted: granted)
+                // After calendar access so a recovered draft gets a name suggestion
+                appState.recoverDraftIfNeeded()
             }
         }
     }

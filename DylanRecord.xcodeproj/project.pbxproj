@@ -10,7 +10,10 @@
 		0505BE5048823C6709BC88D5 /* TranscriptManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 266B6E28D8B67CF3CE773F49 /* TranscriptManager.swift */; };
 		0676999F2C2A399CA5D76F39 /* MenuBarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00574AFD166708FE34B2F1F8 /* MenuBarView.swift */; };
 		109EE0D5F014DD13024C8318 /* DylanRecordApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9256F998F9E53134486584EC /* DylanRecordApp.swift */; };
+		11F1B28550C76869F747DA2C /* TranscriptDraftStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F65D7DF0CCCBB215DBAB38DD /* TranscriptDraftStoreTests.swift */; };
 		155B2C4600D0CBFAA7526B9C /* AppState.swift in Sources */ = {isa = PBXBuildFile; fileRef = A648FFB0960536FB37AB8E7D /* AppState.swift */; };
+		29C10CF252D177C4D5BC765B /* Notifier.swift in Sources */ = {isa = PBXBuildFile; fileRef = 571D284503AD56FAACEF2633 /* Notifier.swift */; };
+		2D1F60EC0A5EB2F41E051485 /* TranscriptDraftStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = E49A5A11B190C8C57678C662 /* TranscriptDraftStore.swift */; };
 		31E4E009D608845EB8FE9CA2 /* DeepgramClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4C7D94B101A68D2FF20252C2 /* DeepgramClient.swift */; };
 		33737F7B66560F0FD20C7A6D /* MeetingWatcher.swift in Sources */ = {isa = PBXBuildFile; fileRef = 313820ADC21EAE88C6359795 /* MeetingWatcher.swift */; };
 		3A7AEF0AD3BDCAD2D77F6E70 /* MarkdownExporter.swift in Sources */ = {isa = PBXBuildFile; fileRef = C6BE314104E0109938F6138B /* MarkdownExporter.swift */; };
@@ -53,6 +56,7 @@
 		4312AF3AF7682B4956EC26A5 /* AudioCombiner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioCombiner.swift; sourceTree = "<group>"; };
 		4AC287D6F90CAA2F09C38584 /* CalendarService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalendarService.swift; sourceTree = "<group>"; };
 		4C7D94B101A68D2FF20252C2 /* DeepgramClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeepgramClient.swift; sourceTree = "<group>"; };
+		571D284503AD56FAACEF2633 /* Notifier.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Notifier.swift; sourceTree = "<group>"; };
 		591F7F7936B9C3952BD319D4 /* MarkdownExporterTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MarkdownExporterTests.swift; sourceTree = "<group>"; };
 		72B83B4D9954EF508A7A6D65 /* RingBufferTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RingBufferTests.swift; sourceTree = "<group>"; };
 		840FCFB12E17627AC96417EE /* DeepgramModelsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeepgramModelsTests.swift; sourceTree = "<group>"; };
@@ -69,8 +73,10 @@
 		CBB89DDB5423F220D2C7423D /* DylanRecord.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = DylanRecord.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		CC2958458319157620AB75D6 /* MicCapture.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MicCapture.swift; sourceTree = "<group>"; };
 		D4373D0325BEC9A940713663 /* DylanRecordTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = DylanRecordTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		E49A5A11B190C8C57678C662 /* TranscriptDraftStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TranscriptDraftStore.swift; sourceTree = "<group>"; };
 		E9FDB415D62C1FB2A0998695 /* DeepgramModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeepgramModels.swift; sourceTree = "<group>"; };
 		F02F01E83DBC2BFDAABEDAAB /* DylanRecord.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = DylanRecord.entitlements; sourceTree = "<group>"; };
+		F65D7DF0CCCBB215DBAB38DD /* TranscriptDraftStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TranscriptDraftStoreTests.swift; sourceTree = "<group>"; };
 		FD20E7D3C9B347AE96AE3D4D /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -82,6 +88,7 @@
 				840FCFB12E17627AC96417EE /* DeepgramModelsTests.swift */,
 				591F7F7936B9C3952BD319D4 /* MarkdownExporterTests.swift */,
 				72B83B4D9954EF508A7A6D65 /* RingBufferTests.swift */,
+				F65D7DF0CCCBB215DBAB38DD /* TranscriptDraftStoreTests.swift */,
 				BAF95470EFA955E4F938CB3E /* TranscriptManagerTests.swift */,
 			);
 			path = DylanRecordTests;
@@ -108,6 +115,7 @@
 			children = (
 				A648FFB0960536FB37AB8E7D /* AppState.swift */,
 				9256F998F9E53134486584EC /* DylanRecordApp.swift */,
+				571D284503AD56FAACEF2633 /* Notifier.swift */,
 			);
 			path = App;
 			sourceTree = "<group>";
@@ -118,6 +126,7 @@
 				4AC287D6F90CAA2F09C38584 /* CalendarService.swift */,
 				C6BE314104E0109938F6138B /* MarkdownExporter.swift */,
 				313820ADC21EAE88C6359795 /* MeetingWatcher.swift */,
+				E49A5A11B190C8C57678C662 /* TranscriptDraftStore.swift */,
 			);
 			path = Export;
 			sourceTree = "<group>";
@@ -264,6 +273,7 @@
 				94CB1B1AB64E40725755474A /* DeepgramModelsTests.swift in Sources */,
 				497230F9C79F638784474258 /* MarkdownExporterTests.swift in Sources */,
 				817E9202F419411B9EC1D465 /* RingBufferTests.swift in Sources */,
+				11F1B28550C76869F747DA2C /* TranscriptDraftStoreTests.swift in Sources */,
 				DD1A3453C16AAF6A8E469E92 /* TranscriptManagerTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -283,11 +293,13 @@
 				33737F7B66560F0FD20C7A6D /* MeetingWatcher.swift in Sources */,
 				0676999F2C2A399CA5D76F39 /* MenuBarView.swift in Sources */,
 				FE63ED5F0ACF8715C9EC01B4 /* MicCapture.swift in Sources */,
+				29C10CF252D177C4D5BC765B /* Notifier.swift in Sources */,
 				7DDFC13A2DF3A8E71EB49C4C /* RingBuffer.swift in Sources */,
 				99E380023496BC56218A5A1C /* SavePopover.swift in Sources */,
 				CB12CE9B0C71896FA2A474A9 /* SettingsView.swift in Sources */,
 				E7B44B0BCB9D911C9FAC290B /* SilenceDetector.swift in Sources */,
 				7B529B1651A12A57C7E40B26 /* SystemAudioCapture.swift in Sources */,
+				2D1F60EC0A5EB2F41E051485 /* TranscriptDraftStore.swift in Sources */,
 				0505BE5048823C6709BC88D5 /* TranscriptManager.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

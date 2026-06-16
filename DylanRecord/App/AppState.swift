@@ -465,10 +465,26 @@ final class AppState {
     }
 
     private func openInObsidian(filePath: String) {
-        let vaultName = (obsidianVaultPath as NSString).lastPathComponent
+        // The configured vault path may be a subfolder of the actual Obsidian
+        // vault (e.g. ".../obsidian-vault/meeting recordings"). The deep-link
+        // needs the real vault — the folder containing `.obsidian` — and a file
+        // path relative to that root, so walk up from the file to find it.
+        // Falls back to the configured path if no `.obsidian` is found.
+        let fm = FileManager.default
+        var vaultRoot = obsidianVaultPath
+        var dir = (filePath as NSString).deletingLastPathComponent
+        while !dir.isEmpty && dir != "/" {
+            if fm.fileExists(atPath: (dir as NSString).appendingPathComponent(".obsidian")) {
+                vaultRoot = dir
+                break
+            }
+            dir = (dir as NSString).deletingLastPathComponent
+        }
+
+        let vaultName = (vaultRoot as NSString).lastPathComponent
         var relative = filePath
-        if relative.hasPrefix(obsidianVaultPath) {
-            relative = String(relative.dropFirst(obsidianVaultPath.count))
+        if relative.hasPrefix(vaultRoot) {
+            relative = String(relative.dropFirst(vaultRoot.count))
         }
         relative = relative.trimmingCharacters(in: CharacterSet(charactersIn: "/"))
 

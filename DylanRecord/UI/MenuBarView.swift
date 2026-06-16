@@ -1,4 +1,5 @@
 import SwiftUI
+import AppKit
 
 struct MenuBarView: View {
     @Environment(AppState.self) private var appState
@@ -132,40 +133,65 @@ struct MenuBarView: View {
     }
 
     private var liveTranscriptView: some View {
-        ScrollViewReader { proxy in
-            ScrollView {
-                VStack(alignment: .leading, spacing: 6) {
-                    if appState.transcriptManager.segments.isEmpty {
-                        Text("Waiting for speech…")
-                            .font(.caption)
-                            .foregroundStyle(.tertiary)
+        VStack(alignment: .leading, spacing: 4) {
+            HStack {
+                Text("Live transcript")
+                    .font(.caption2)
+                    .foregroundStyle(.tertiary)
+                Spacer()
+                Button {
+                    copyTranscript()
+                } label: {
+                    Label("Copy", systemImage: "doc.on.doc")
+                        .font(.caption2)
+                }
+                .buttonStyle(.borderless)
+                .disabled(appState.transcriptManager.segments.isEmpty)
+                .help("Copy the full transcript to the clipboard")
+            }
+
+            ScrollViewReader { proxy in
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 6) {
+                        if appState.transcriptManager.segments.isEmpty {
+                            Text("Waiting for speech…")
+                                .font(.caption)
+                                .foregroundStyle(.tertiary)
+                        }
+                        ForEach(appState.transcriptManager.segments) { segment in
+                            (Text("\(segment.speaker.rawValue): ")
+                                .bold()
+                                .foregroundStyle(segment.speaker == .me ? Color.accentColor : Color.secondary)
+                                + Text(segment.text))
+                                .font(.caption)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .textSelection(.enabled)
+                                .id(segment.id)
+                        }
                     }
-                    ForEach(appState.transcriptManager.segments) { segment in
-                        (Text("\(segment.speaker.rawValue): ")
-                            .bold()
-                            .foregroundStyle(segment.speaker == .me ? Color.accentColor : Color.secondary)
-                            + Text(segment.text))
-                            .font(.caption)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .id(segment.id)
+                    .padding(6)
+                }
+                .frame(height: 200)
+                .background(.quaternary.opacity(0.3))
+                .cornerRadius(6)
+                .onChange(of: appState.transcriptManager.segments.count) {
+                    if let last = appState.transcriptManager.segments.last {
+                        proxy.scrollTo(last.id, anchor: .bottom)
                     }
                 }
-                .padding(6)
-            }
-            .frame(height: 200)
-            .background(.quaternary.opacity(0.3))
-            .cornerRadius(6)
-            .onChange(of: appState.transcriptManager.segments.count) {
-                if let last = appState.transcriptManager.segments.last {
-                    proxy.scrollTo(last.id, anchor: .bottom)
-                }
-            }
-            .onAppear {
-                if let last = appState.transcriptManager.segments.last {
-                    proxy.scrollTo(last.id, anchor: .bottom)
+                .onAppear {
+                    if let last = appState.transcriptManager.segments.last {
+                        proxy.scrollTo(last.id, anchor: .bottom)
+                    }
                 }
             }
         }
+    }
+
+    private func copyTranscript() {
+        let text = appState.transcriptManager.formattedTranscript()
+        NSPasteboard.general.clearContents()
+        NSPasteboard.general.setString(text, forType: .string)
     }
 
     private func nextMeetingView(_ meeting: CalendarService.UpcomingMeeting) -> some View {

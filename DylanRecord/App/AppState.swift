@@ -100,17 +100,12 @@ final class AppState {
     }
 
     private static let defaultKeywords = """
-    Sasha
-    Archon
     Claude Code
     Claude
     Anthropic
     Cursor
     Obsidian
     Deepgram
-    Rasmus
-    Peter
-    Tove
     push
     BTW
     PR

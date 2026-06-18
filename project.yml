@@ -12,11 +12,6 @@ targets:
     platform: macOS
     sources:
       - path: DylanRecord
-        excludes:
-          - "keywords.txt"
-      - path: DylanRecord/keywords.txt
-        type: file
-        buildPhase: resources
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.rasmus.dylanrecord

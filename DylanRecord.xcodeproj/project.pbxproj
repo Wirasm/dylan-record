@@ -28,7 +28,6 @@
 		90A1777E150B486373A21ADB /* ChannelWatchdog.swift in Sources */ = {isa = PBXBuildFile; fileRef = E9DB559F54B45FD0328CD70D /* ChannelWatchdog.swift */; };
 		94CB1B1AB64E40725755474A /* DeepgramModelsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 840FCFB12E17627AC96417EE /* DeepgramModelsTests.swift */; };
 		99E380023496BC56218A5A1C /* SavePopover.swift in Sources */ = {isa = PBXBuildFile; fileRef = 08CF749436A97A3F15CC7D56 /* SavePopover.swift */; };
-		AE0F1C188B4B623B829AF129 /* keywords.txt in Resources */ = {isa = PBXBuildFile; fileRef = 36A2D936F50E0F17AA072FE3 /* keywords.txt */; };
 		C38B2D4B3615F2BF8B3E9D12 /* AudioBackupWriter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0454742CC16B959BCF6006F5 /* AudioBackupWriter.swift */; };
 		CA289D1670F399ED5BC5E758 /* DeepgramClientTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C665702A5A27D2AA84BF79D5 /* DeepgramClientTests.swift */; };
 		CB12CE9B0C71896FA2A474A9 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BE8A199DE738080C60D63B03 /* SettingsView.swift */; };
@@ -58,7 +57,6 @@
 		1DFC9A3E2F59DCE704C522B1 /* SilenceDetector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SilenceDetector.swift; sourceTree = "<group>"; };
 		266B6E28D8B67CF3CE773F49 /* TranscriptManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TranscriptManager.swift; sourceTree = "<group>"; };
 		313820ADC21EAE88C6359795 /* MeetingWatcher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MeetingWatcher.swift; sourceTree = "<group>"; };
-		36A2D936F50E0F17AA072FE3 /* keywords.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = keywords.txt; sourceTree = "<group>"; };
 		4312AF3AF7682B4956EC26A5 /* AudioCombiner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioCombiner.swift; sourceTree = "<group>"; };
 		4AC287D6F90CAA2F09C38584 /* CalendarService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalendarService.swift; sourceTree = "<group>"; };
 		4C7D94B101A68D2FF20252C2 /* DeepgramClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeepgramClient.swift; sourceTree = "<group>"; };
@@ -109,7 +107,6 @@
 				FD20E7D3C9B347AE96AE3D4D /* Assets.xcassets */,
 				F02F01E83DBC2BFDAABEDAAB /* DylanRecord.entitlements */,
 				B5565CCE3F71BDC1060A35C2 /* Info.plist */,
-				36A2D936F50E0F17AA072FE3 /* keywords.txt */,
 				0C2CC6AB0D413D27FE125A5B /* App */,
 				CD1E26891D8C564CC6C8A97A /* Audio */,
 				343B041C415F9D93905C8414 /* Export */,
@@ -270,7 +267,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				E5CD27F234F6B66638FB67C2 /* Assets.xcassets in Resources */,
-				AE0F1C188B4B623B829AF129 /* keywords.txt in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

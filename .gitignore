@@ -13,3 +13,10 @@ xcuserdata/
 *.ipa
 *.dSYM.zip
 *.dSYM
+
+# Coverage / profiling artifacts
+*.profraw
+*.profdata
+
+# Personal keyword seed (kept local; app reads keywords from Settings)
+DylanRecord/keywords.txt

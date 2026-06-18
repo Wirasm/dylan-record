@@ -35,9 +35,9 @@ struct DeepgramClientTests {
 
     @Test("URL includes keyterms")
     func keyterms() {
-        let url = DeepgramClient.buildURL(channelCount: 1, language: nil, keyterms: ["Sasha", "Claude Code"])
+        let url = DeepgramClient.buildURL(channelCount: 1, language: nil, keyterms: ["Acme", "Claude Code"])
         let urlStr = url?.absoluteString ?? ""
-        #expect(urlStr.contains("keyterm=Sasha"))
+        #expect(urlStr.contains("keyterm=Acme"))
         #expect(urlStr.contains("keyterm=Claude%20Code"))
     }
 

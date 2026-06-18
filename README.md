@@ -6,6 +6,8 @@ It records your meeting (your mic **and** the other side's computer audio), tran
 
 When you stop, it finalizes the note in place (and can add an AI summary). Nothing depends on a clean save at the end — the transcript is already in your vault.
 
+<img src="docs/menu-bar.png" width="320" alt="Dylan Record menu bar popover">
+
 ## How it works
 
 - While recording, the note is written to `<your-vault>/Meetings/<date> <name>.md` and rewritten on every finalized line.

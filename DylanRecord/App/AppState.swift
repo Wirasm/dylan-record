@@ -35,6 +35,10 @@ final class AppState {
     private var pendingStartDate: Date?
     private var pendingDuration: TimeInterval = 0
     private let draftStore = TranscriptDraftStore()
+    // Live note streamed into the vault while recording, so the meeting is
+    // watchable (and readable by tools) in real time and survives a failed save.
+    private var liveNoteName: String?
+    private var liveFilePath: String?
 
     var isRecording: Bool {
         if case .recording = state { return true }
@@ -276,6 +280,13 @@ final class AppState {
         // Clear previous transcript
         transcriptManager.clear()
 
+        // Start streaming the note into the vault immediately. Provisional name
+        // comes from the current calendar event; the save dialog lets you rename
+        // it later. Created now so the file exists to watch from the first word.
+        liveNoteName = calendarService.meetingTitleOverlapping(start: now, end: now) ?? "Untitled Recording"
+        liveFilePath = nil
+        writeLiveNote()
+
         // Set up audio combiner
         let combiner = AudioCombiner()
         self.combiner = combiner
@@ -296,6 +307,8 @@ final class AppState {
                     self.draftStore.append(segment)
                     self.silenceDetector?.speechDetected()
                     self.channelWatchdog?.segmentArrived(speaker: segment.speaker)
+                    // Stream the new line into the vault note in real time
+                    self.writeLiveNote()
                 }
             }
         }
@@ -461,6 +474,33 @@ final class AppState {
         print("[AppState] Recording stopped, \(count) segments")
     }
 
+    /// Streams the current transcript into the vault note as the meeting
+    /// happens. Best-effort — a write failure must never interrupt recording.
+    private func writeLiveNote() {
+        guard let name = liveNoteName,
+              !obsidianVaultPath.isEmpty,
+              let start = recordingStartDate else { return }
+        let exporter = MarkdownExporter()
+        let md = exporter.render(
+            segments: transcriptManager.segments,
+            meetingName: name,
+            startDate: start,
+            duration: elapsedTime,
+            calendarEvent: nil,
+            live: true
+        )
+        do {
+            liveFilePath = try exporter.write(
+                content: md,
+                meetingName: name,
+                startDate: start,
+                vaultPath: obsidianVaultPath
+            )
+        } catch {
+            print("[AppState] Live note write failed: \(error)")
+        }
+    }
+
     func saveTranscript(name: String) {
         guard !obsidianVaultPath.isEmpty else {
             lastError = "Set vault path in Settings, then save again."
@@ -477,6 +517,13 @@ final class AppState {
                 calendarEvent: suggestedMeetingName
             )
             print("[AppState] Saved to: \(filePath)")
+            // If the final name differs from the in-progress note, remove the
+            // stale live file so the vault doesn't end up with a duplicate.
+            if let live = liveFilePath, live != filePath {
+                try? FileManager.default.removeItem(atPath: live)
+            }
+            liveFilePath = nil
+            liveNoteName = nil
             draftStore.clear()
             AudioBackupWriter.clear()
             let transcriptText = transcriptManager.formattedTranscript()
@@ -504,6 +551,12 @@ final class AppState {
     }
 
     func discardRecording() {
+        // Remove the in-progress note streamed to the vault.
+        if let live = liveFilePath {
+            try? FileManager.default.removeItem(atPath: live)
+        }
+        liveFilePath = nil
+        liveNoteName = nil
         transcriptManager.clear()
         draftStore.clear()
         AudioBackupWriter.clear()

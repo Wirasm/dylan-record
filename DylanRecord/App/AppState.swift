@@ -141,6 +141,35 @@ final class AppState {
     private var localHotkeyMonitor: Any?
     private let calendarService = CalendarService()
 
+    init() {
+        migrateLegacyDefaultsIfNeeded()
+    }
+
+    /// Earlier builds shipped without a `CFBundleIdentifier`, so `UserDefaults`
+    /// fell back to the executable-name domain ("DylanRecord"). Now that the
+    /// bundle has a real identifier, standard defaults point at a fresh, empty
+    /// domain — so copy the saved settings over once. No-op on installs that
+    /// never ran the legacy build, or once the migration has already happened.
+    private func migrateLegacyDefaultsIfNeeded() {
+        let migratedFlag = "didMigrateLegacyDefaults"
+        let defaults = UserDefaults.standard
+        guard !defaults.bool(forKey: migratedFlag) else { return }
+        defaults.set(true, forKey: migratedFlag)
+
+        guard let legacy = defaults.persistentDomain(forName: "DylanRecord") else { return }
+        let keys = ["deepgramApiKey", "anthropicApiKey", "obsidianVaultPath", "language", "keywords"]
+        var migrated = 0
+        for key in keys where defaults.object(forKey: key) == nil {
+            if let value = legacy[key] {
+                defaults.set(value, forKey: key)
+                migrated += 1
+            }
+        }
+        if migrated > 0 {
+            print("[AppState] Migrated \(migrated) legacy setting(s) from 'DylanRecord' domain")
+        }
+    }
+
     func setupHotkey() {
         // Global monitors don't fire while our own app has focus (e.g. the
         // popover is open), so register a local monitor too.

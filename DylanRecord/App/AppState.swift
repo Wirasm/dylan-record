@@ -87,9 +87,11 @@ final class AppState {
         set { UserDefaults.standard.set(newValue, forKey: "obsidianVaultPath") }
     }
 
-    var language: String {
-        get { UserDefaults.standard.string(forKey: "language") ?? "multi" }
-        set { UserDefaults.standard.set(newValue, forKey: "language") }
+    // Stored (not computed) so SwiftUI observes changes — otherwise the menu's
+    // language picker and the recording view don't refresh when ⌘⇧1/⌘⇧2 change
+    // the language. didSet keeps it persisted to UserDefaults.
+    var language: String = UserDefaults.standard.string(forKey: "language") ?? "multi" {
+        didSet { UserDefaults.standard.set(language, forKey: "language") }
     }
 
     var keywordsText: String {
@@ -148,6 +150,9 @@ final class AppState {
 
     init() {
         migrateLegacyDefaultsIfNeeded()
+        // Stored-property initializers run before this, so re-read after the
+        // migration in case it just populated this domain.
+        language = UserDefaults.standard.string(forKey: "language") ?? "multi"
     }
 
     /// Earlier builds shipped without a `CFBundleIdentifier`, so `UserDefaults`

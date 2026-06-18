@@ -1,4 +1,5 @@
 import AVFoundation
+import CoreGraphics
 import Foundation
 import ServiceManagement
 import SwiftUI
@@ -364,6 +365,22 @@ final class AppState {
             print("[AppState] Mic start error: \(error)")
             lastError = "Mic: \(error.localizedDescription)"
             Notifier.send(title: "Mic Capture Failed", body: error.localizedDescription)
+        }
+
+        // System audio (the other side) is captured with a Core Audio process
+        // tap, which macOS gates behind the "Screen & System Audio Recording"
+        // permission. The tap API never triggers the prompt itself, so request
+        // it explicitly — this also registers the app in the Privacy list so it
+        // can be enabled by hand. Without it the tap runs but returns silence.
+        if !CGPreflightScreenCaptureAccess() {
+            let granted = CGRequestScreenCaptureAccess()
+            if !granted {
+                lastError = "Enable ‘Screen & System Audio Recording’ for DylanRecord in System Settings, then restart the recording to capture the other side."
+                Notifier.send(
+                    title: "Permission Needed",
+                    body: "Allow Screen & System Audio Recording for DylanRecord, then restart the recording."
+                )
+            }
         }
 
         do {
